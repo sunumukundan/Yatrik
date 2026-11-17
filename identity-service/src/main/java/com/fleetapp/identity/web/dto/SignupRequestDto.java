@@ -13,8 +13,7 @@ public class SignupRequestDto {
     @NotBlank(message = "Password is required")
     private String password;
 
-    @NotBlank(message = "Phone number is required")
-    @Pattern(regexp = "^\\+?[0-9]{10,15}$")
+    @Pattern(regexp = "^\\+?[0-9]{10,15}$", message = "Invalid phone format")
     private String phone;
 
     public SignupRequestDto() {}

@@ -115,6 +115,11 @@ public class AuthService {
             throw new IllegalStateException("Email already registered");
         }
 
+        // Create organisation first (like OTP flow)
+        Organisation org = new Organisation();
+        org.setName(email + "'s Fleet");
+        org = organisationRepository.save(org);
+
         UserRole role = UserRole.OWNER;
         AppUser user = new AppUser();
         user.setEmail(email);
@@ -123,7 +128,7 @@ public class AuthService {
         user.setPhone(phone);
         user.setName("Owner"); // Required field
         user.setStatus(UserStatus.ACTIVE);
-        user.setOrganisationId(UUID.randomUUID());
+        user.setOrganisationId(org.getId());
 
         appUserRepository.save(user);
 
