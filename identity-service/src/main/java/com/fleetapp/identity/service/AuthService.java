@@ -125,7 +125,8 @@ public class AuthService {
         user.setEmail(email);
         user.setPasswordHash(passwordEncoder.encode(password));
         user.setRole(role);
-        user.setPhone(phone);
+        // Phone is NOT NULL in DB - use empty string if not provided
+        user.setPhone(phone != null && !phone.isBlank() ? phone : "");
         user.setName("Owner"); // Required field
         user.setStatus(UserStatus.ACTIVE);
         user.setOrganisationId(org.getId());
