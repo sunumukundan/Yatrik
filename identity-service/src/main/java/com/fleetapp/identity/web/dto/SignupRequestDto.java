@@ -14,7 +14,7 @@ public class SignupRequestDto {
     private String password;
 
     @Pattern(regexp = "^\\+?[0-9]{10,15}$", message = "Invalid phone format")
-    private String phone;
+    private String phone = ""; // Optional - defaults to empty string
 
     public SignupRequestDto() {}
 

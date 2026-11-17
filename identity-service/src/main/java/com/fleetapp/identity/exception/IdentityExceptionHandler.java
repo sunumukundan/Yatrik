@@ -1,5 +1,6 @@
 package com.fleetapp.identity.exception;
 
+import com.fleetapp.identity.exception.InvalidCredentialsException;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
@@ -30,6 +31,11 @@ public class IdentityExceptionHandler {
 
     @ExceptionHandler(InvalidRefreshTokenException.class)
     public ResponseEntity<Map<String, Object>> handleInvalidRefresh(InvalidRefreshTokenException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(body(ex.getMessage()));
+    }
+
+    @ExceptionHandler(InvalidCredentialsException.class)
+    public ResponseEntity<Map<String, Object>> handleInvalidCredentials(InvalidCredentialsException ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(body(ex.getMessage()));
     }
 

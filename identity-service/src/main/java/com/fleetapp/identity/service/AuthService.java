@@ -1,6 +1,7 @@
 package com.fleetapp.identity.service;
 
 import com.fleetapp.identity.domain.*;
+import com.fleetapp.identity.exception.InvalidCredentialsException;
 import com.fleetapp.identity.exception.InvalidRefreshTokenException;
 import com.fleetapp.identity.repository.AppUserRepository;
 import com.fleetapp.identity.repository.OrganisationRepository;
@@ -86,14 +87,14 @@ public class AuthService {
     @Transactional
     public AuthResponse login(String email, String password) {
         AppUser user = appUserRepository.findByEmailAndDeletedAtIsNull(email)
-            .orElseThrow(() -> new IllegalArgumentException("Invalid email or password"));
+            .orElseThrow(InvalidCredentialsException::new);
 
         if (!passwordEncoder.matches(password, user.getPasswordHash())) {
-            throw new IllegalArgumentException("Invalid email or password");
+            throw new InvalidCredentialsException();
         }
 
         if (user.getStatus() != UserStatus.ACTIVE) {
-            throw new IllegalArgumentException("Account is not active");
+            throw new InvalidCredentialsException();
         }
 
         String accessToken = jwtService.generateAccessToken(
