@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: identity_db
+      POSTGRES_USER: identity
+      POSTGRES_PASSWORD: local_identity_dev
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U identity -d identity_db"]
+      interval: 5s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+
+  identity-service:
+    build: ./identity-service
+    ports:
+      - "8081:8081"
+    environment:
+      IDENTITY_DB_HOST: postgres
+      IDENTITY_DB_PORT: 5432
+      IDENTITY_DB_NAME: identity_db
+      IDENTITY_DB_USER: identity
+      IDENTITY_DB_PASSWORD: local_identity_dev
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: [
+      "sh", "-c",
+      "java -Djava.security.egd=file:/dev/./urandom -Dspring.profiles.active=docker -jar target/identity-service.jar --server.port=8081 && tail -f /dev/null"
+    ]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local

@@ -1,0 +1,134 @@
+# Docker profile - PostgreSQL configuration
+# Activated with: -Dspring.profiles.active=docker
+
+spring:
+  datasource:
+    # PostgreSQL for Docker deployment
+    url: jdbc:postgresql://${IDENTITY_DB_HOST:localhost}:${IDENTITY_DB_PORT:5432}/${IDENTITY_DB_NAME:identity_db}
+    username: ${IDENTITY_DB_USER:identity}
+    password: ${IDENTITY_DB_PASSWORD:local_identity_dev}
+    hikari:
+      connection-timeout: 30000
+      maximum-pool-size: 10
+      minimum-idle: 5
+      pool-name: IdentityServicePostgresPool
+      max-lifetime: 600000
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    validate-on-migrate: true
+    baseline-version: 1
+    baseline-description: Initial Migration
+    ignore-failed-dbs: true
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        use_sql_comments: true
+        default_schema: public
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        implicit_naming_strategy: org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy
+        physical_naming_strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
+
+  security:
+    user:
+      name: admin
+      password: ${ADMIN_PASSWORD:admin}
+    web:
+      security:
+        enabled: true
+    cors:
+      allowed-origins: "*"
+      allowed-methods: "GET,POST,PUT,DELETE,OPTIONS"
+      allowed-headers: "*"
+    csrf:
+      enabled: false
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:shared-secret-key-1234567890abcdef1234567890abcdef}
+    access-token-minutes: 30
+  sms:
+    # Provider for SMS OTP delivery: "log" (dev - prints to console) or "twilio" (production)
+    # Set SMS_PROVIDER=twilio and configure TWILIO_* env vars for production SMS
+    provider: ${SMS_PROVIDER:log}
+    twilio:
+      account-sid: ${TWILIO_ACCOUNT_SID}
+      auth-token: ${TWILIO_AUTH_TOKEN}
+      from-number: ${TWILIO_FROM_NUMBER}
+  email:
+    # Provider for Email OTP delivery: "log" (dev - prints to console) or "smtp" (production)
+    # Set EMAIL_PROVIDER=smtp and configure SMTP_* env vars for production email
+    provider: ${EMAIL_PROVIDER:log}
+    smtp:
+      host: ${SMTP_HOST:localhost}
+      port: ${SMTP_PORT:587}
+      username: ${SMTP_USERNAME}
+      password: ${SMTP_PASSWORD}
+      from: ${SMTP_FROM:noreply@yatrik.local}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+    health:
+      show-details: always
+    info:
+      build:
+        enabled: true
+      git:
+        enabled: true
+
+management.health:
+  show-details: always
+  diskspace:
+    enabled: true
+  db:
+    enabled: true
+  redis:
+    enabled: false
+
+management.metrics:
+  export:
+    prometheus:
+      enabled: true
+  distribution:
+    percentiles-histogram:
+      http.server.requests: true
+  tags:
+    application: ${spring.application.name}
+
+spring.main:
+  banner-mode: console
+  web-application-type: servlet
+  log-startup-info: true
+
+spring.autoconfigure:
+  exclude:
+    - org.springframework.boot.autoconfigure.security.SecurityAutoConfiguration
+    - org.springframework.boot.autoconfigure.security.servlet.SecurityFilterAutoConfiguration
+
+spring.sql.init:
+  mode: never
+  schema-locations: classpath*:db/schema.sql
+  data-locations: classpath*:db/data.sql
+  continue-on-error: false
+
+info.app:
+  name: ${spring.application.name}
+  version: 0.1.0-SNAPSHOT
+  description: Owns organisations, users, subscriptions, and issues access and refresh tokens.
+
+logging:
+  level:
+    com.fleetapp.identity: INFO
+    org.springframework: WARN
+    org.hibernate: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %logger{36} - %msg%n"
