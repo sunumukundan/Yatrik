@@ -7,6 +7,8 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import lombok.Getter;
@@ -57,6 +59,15 @@ public class AppUser extends TenantEntity {
 
     @Column(name = "created_by")
     private UUID createdBy;
+
+    // Fleet assignment for FLEET_OWNER role (nullable for other roles)
+    @ManyToOne
+    @JoinColumn(name = "assigned_fleet_id")
+    private UUID assignedFleetId;
+
+    // License seat tracking
+    @Column(name = "license_seat_active")
+    private Boolean licenseSeatActive = false;
 
     public AppUser(String email, String passwordHash, String phone, String name, UserRole role) {
         this.email = email;

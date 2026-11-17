@@ -14,6 +14,7 @@ import lombok.Setter;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
+import java.time.Instant;
 import java.util.UUID;
 
 /**
@@ -51,4 +52,49 @@ public class Organisation extends AuditedEntity {
 
     @Column(name = "default_language", nullable = false, length = 5)
     private String defaultLanguage = "en";
+
+    // White-label / branding fields
+    @Column(name = "display_name", length = 200)
+    private String displayName;
+
+    @Column(name = "logo_url", length = 500)
+    private String logoUrl;
+
+    @Column(name = "primary_color", length = 7)
+    private String primaryColor;
+
+    @Column(name = "accent_color", length = 7)
+    private String accentColor;
+
+    @Column(name = "support_email", length = 150)
+    private String supportEmail;
+
+    @Column(name = "support_phone", length = 20)
+    private String supportPhone;
+
+    // License entitlement fields (managed by Super Admin)
+    @Column(name = "license_admin_seats")
+    private Integer licenseAdminSeats = 1;
+
+    @Column(name = "license_fleet_owner_seats")
+    private Integer licenseFleetOwnerSeats = 1;
+
+    @Column(name = "license_start_date")
+    private Instant licenseStartDate;
+
+    @Column(name = "license_end_date")
+    private Instant licenseEndDate;
+
+    @Column(name = "license_grace_period_days")
+    private Integer licenseGracePeriodDays = 7;
+
+    // Feature flags
+    @Column(name = "feature_drivers_billable")
+    private Boolean featureDriversBillable = false;
+
+    @Column(name = "feature_custom_domain")
+    private Boolean featureCustomDomain = false;
+
+    @Column(name = "feature_branded_sender")
+    private Boolean featureBrandedSender = false;
 }

@@ -62,9 +62,9 @@ public class AuthService {
 
     /**
      * Verifies the OTP, then either logs in an existing user or — if this identifier has
-     * never been seen — creates a new organisation and an OWNER user for it.
-     * MVP assumption: first-time verification always creates an OWNER + a new org.
-     * Inviting MANAGER/DRIVER/ACCOUNTANT users is a separate, authenticated flow
+     * never been seen — creates a new organisation and an ADMIN user for it.
+     * MVP assumption: first-time verification always creates an ADMIN + a new org.
+     * Inviting FLEET_OWNER/DRIVER/ACCOUNTANT users is a separate, authenticated flow
      * (not built yet) that creates the app_user row ahead of their first OTP login.
      */
     @Transactional
@@ -97,10 +97,20 @@ public class AuthService {
             throw new InvalidCredentialsException();
         }
 
+        // Check organisation status
+        Organisation org = organisationRepository.findById(user.getOrganisationId()).orElse(null);
+        if (org != null && org.getStatus() != OrgStatus.ACTIVE && org.getStatus() != OrgStatus.TRIAL && org.getStatus() != OrgStatus.GRACE) {
+            throw new InvalidCredentialsException();
+        }
+
         String accessToken = jwtService.generateAccessToken(
             user.getId(),
             user.getOrganisationId(),
-            user.getRole().name()
+            user.getRole().name(),
+            user.getCreatedBy(),
+            user.getAssignedFleetId(),
+            user.getLicenseSeatActive(),
+            org != null ? org.getStatus().name() : null
         );
         String refreshToken = issueRefreshToken(user.getId());
 
@@ -121,23 +131,31 @@ public class AuthService {
         org.setName(email + "'s Fleet");
         org = organisationRepository.save(org);
 
-        UserRole role = UserRole.OWNER;
+        UserRole role = UserRole.ADMIN; // Changed from OWNER to ADMIN
         AppUser user = new AppUser();
         user.setEmail(email);
         user.setPasswordHash(passwordEncoder.encode(password));
         user.setRole(role);
         // Phone is NOT NULL in DB - use empty string if not provided
         user.setPhone(phone != null && !phone.isBlank() ? phone : "");
-        user.setName("Owner"); // Required field
+        user.setName("Admin"); // Required field
         user.setStatus(UserStatus.ACTIVE);
         user.setOrganisationId(org.getId());
+        user.setLicenseSeatActive(true); // First admin gets a license seat
 
         appUserRepository.save(user);
+
+        // Fetch organisation to get status for JWT
+        Organisation savedOrg = organisationRepository.findById(org.getId()).orElse(org);
 
         String accessToken = jwtService.generateAccessToken(
             user.getId(),
             user.getOrganisationId(),
-            user.getRole().name()
+            user.getRole().name(),
+            user.getCreatedBy(),
+            user.getAssignedFleetId(),
+            user.getLicenseSeatActive(),
+            savedOrg.getStatus().name()
         );
         String refreshToken = issueRefreshToken(user.getId());
 
@@ -211,10 +229,17 @@ public class AuthService {
     }
 
     private AuthResponse buildAuthResponse(AppUser user) {
+        // Fetch organisation to get status
+        Organisation org = organisationRepository.findById(user.getOrganisationId()).orElse(null);
+
         String accessToken = jwtService.generateAccessToken(
             user.getId(),
             user.getOrganisationId(),
-            user.getRole().name()
+            user.getRole().name(),
+            user.getCreatedBy(),
+            user.getAssignedFleetId(),
+            user.getLicenseSeatActive(),
+            org != null ? org.getStatus().name() : null
         );
         String refreshToken = issueRefreshToken(user.getId());
 
@@ -246,9 +271,10 @@ public class AuthService {
         }
 
         user.setName(dto.name() != null ? dto.name() : "Owner");
-        user.setRole(UserRole.OWNER);
+        user.setRole(UserRole.ADMIN); // Changed from OWNER to ADMIN
         user.setStatus(UserStatus.ACTIVE);
         user.setOrganisationId(org.getId());
+        user.setLicenseSeatActive(true); // First admin gets a seat
         // Set a dummy password hash for OTP-only users (password_hash is NOT NULL in DB)
         user.setPasswordHash("OTP_ONLY_ACCOUNT_" + UUID.randomUUID());
         // Set createdBy to organisation's createdBy to maintain audit trail consistency

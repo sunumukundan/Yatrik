@@ -26,6 +26,9 @@ interface Session {
   userId: string
   organisationId: string
   role: UserRole
+  assignedFleetId?: string
+  licenseSeatActive?: boolean
+  orgStatus?: string
 }
 
 interface AuthState {
@@ -79,7 +82,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSession({
       userId: claims.sub ?? '',
       organisationId: claims.org ?? '',
-      role: (claims.role as UserRole) ?? 'OWNER',
+      role: (claims.role as UserRole) ?? 'ADMIN',
+      assignedFleetId: claims.fleet,
+      licenseSeatActive: claims.license_active,
+      orgStatus: claims.org_status,
     })
     setIsLoading(false)
   }, [])
@@ -108,7 +114,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         body.phone = identifier
       }
-      // A new identifier gets a new organisation and an OWNER account
+      // A new identifier gets a new organisation and an ADMIN account
       if (name) body.name = name
       if (organisationName) body.organisationName = organisationName
 
@@ -118,10 +124,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Request timed out')), 30000))
       ])
       tokens.set(res.accessToken, res.refreshToken)
+      const claims = decodeJwt(res.accessToken)
       setSession({
         userId: res.userId,
         organisationId: res.organisationId,
         role: res.role,
+        assignedFleetId: claims?.fleet,
+        licenseSeatActive: claims?.license_active,
+        orgStatus: claims?.org_status,
       })
     },
     [],
@@ -144,20 +154,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback(async (email: string, password: string) => {
     const res = await api.post<AuthResponse>('/auth/login', { email, password }, { anonymous: true })
     tokens.set(res.accessToken, res.refreshToken)
+    // Decode the new token to get the additional claims
+    const claims = decodeJwt(res.accessToken)
     setSession({
       userId: res.userId,
       organisationId: res.organisationId,
       role: res.role,
+      assignedFleetId: claims?.fleet,
+      licenseSeatActive: claims?.license_active,
+      orgStatus: claims?.org_status,
     })
   }, [])
 
   const signup = useCallback(async (email: string, password: string, phone: string) => {
     const res = await api.post<AuthResponse>('/auth/signup', { email, password, phone }, { anonymous: true })
     tokens.set(res.accessToken, res.refreshToken)
+    const claims = decodeJwt(res.accessToken)
     setSession({
       userId: res.userId,
       organisationId: res.organisationId,
       role: res.role,
+      assignedFleetId: claims?.fleet,
+      licenseSeatActive: claims?.license_active,
+      orgStatus: claims?.org_status,
     })
   }, [])
 
@@ -189,6 +208,11 @@ interface Claims {
   org?: string
   role?: string
   exp?: number
+  fleet?: string
+  license_active?: boolean
+  org_status?: string
+  created_by?: string
+  iat?: number
 }
 
 /**

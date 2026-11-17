@@ -23,6 +23,11 @@ import java.util.UUID;
  * The token contract must stay identical across the platform:
  *   HS256, subject = user id, claim "org" = organisation id, claim "role",
  *   30-minute expiry, symmetric shared secret.
+ *
+ * Milestone 1 additions:
+ *   claim "fleet" = assigned fleet id (for FLEET_OWNER)
+ *   claim "license_active" = whether user has active license seat
+ *   claim "org_status" = organisation status
  */
 @Service
 public class JwtService {
@@ -37,32 +42,36 @@ public class JwtService {
         this.accessTokenMinutes = accessTokenMinutes;
     }
 
-    public String generateAccessToken(UUID userId, UUID organisationId, String role, UUID createdBy) {
+    public String generateAccessToken(UUID userId, UUID organisationId, String role, UUID createdBy, UUID assignedFleetId, Boolean licenseSeatActive, String orgStatus) {
         Instant now = Instant.now();
-        return Jwts.builder()
+        var builder = Jwts.builder()
                 .subject(userId.toString())
                 .claim("org", organisationId.toString())
                 .claim("role", role)
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(now.plus(accessTokenMinutes, ChronoUnit.MINUTES)))
-                .claim("created_by", createdBy.toString())
-                .claim("iat", now.getEpochSecond())
-                .signWith(key)
-                .compact();
+                .claim("created_by", createdBy != null ? createdBy.toString() : userId.toString())
+                .claim("iat", now.getEpochSecond());
+
+        if (assignedFleetId != null) {
+            builder.claim("fleet", assignedFleetId.toString());
+        }
+        if (licenseSeatActive != null) {
+            builder.claim("license_active", licenseSeatActive);
+        }
+        if (orgStatus != null) {
+            builder.claim("org_status", orgStatus);
+        }
+
+        return builder.signWith(key).compact();
     }
 
     public String generateAccessToken(UUID userId, UUID organisationId, String role) {
-        Instant now = Instant.now();
-        return Jwts.builder()
-                .subject(userId.toString())
-                .claim("org", organisationId.toString())
-                .claim("role", role)
-                .issuedAt(Date.from(now))
-                .expiration(Date.from(now.plus(accessTokenMinutes, ChronoUnit.MINUTES)))
-                .claim("created_by", userId.toString())
-                .claim("iat", now.getEpochSecond())
-                .signWith(key)
-                .compact();
+        return generateAccessToken(userId, organisationId, role, null, null, null, null);
+    }
+
+    public String generateAccessToken(UUID userId, UUID organisationId, String role, UUID createdBy) {
+        return generateAccessToken(userId, organisationId, role, createdBy, null, null, null);
     }
 
     public Claims parse(String token) {

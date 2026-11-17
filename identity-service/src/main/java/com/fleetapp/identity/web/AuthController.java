@@ -44,7 +44,7 @@ public class AuthController {
     /**
      * Verifies the OTP and returns the access and refresh tokens.
      *
-     * A phone that has never been seen gets a new organisation and an OWNER account.
+     * A phone that has never been seen gets a new organisation and an ADMIN account.
      */
     @PostMapping("/otp/verify")
     public AuthResponse verifyOtp(@Valid @RequestBody OtpVerifyDto dto) {
