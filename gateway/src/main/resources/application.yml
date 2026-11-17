@@ -1,5 +1,5 @@
 server:
-  port: 8090
+  port: 8080
 
 spring:
   cloud:
@@ -7,21 +7,21 @@ spring:
       routes:
         # All /auth/** routes - public (no authentication required)
         - id: auth-otp-request
-          uri: http://localhost:8081
+          uri: http://localhost:8095
           predicates:
             - Path=/auth/otp/request
             - Method=POST
           # No StripPrefix for auth endpoints to maintain correct routing
 
         - id: auth-otp-verify
-          uri: http://localhost:8081
+          uri: http://localhost:8095
           predicates:
             - Path=/auth/otp/verify
             - Method=POST
           # No StripPrefix - identity-service expects full /auth/otp/verify path
 
         - id: auth-refresh
-          uri: http://localhost:8081
+          uri: http://localhost:8095
           predicates:
             - Path=/auth/refresh
             - Method=POST
@@ -29,21 +29,21 @@ spring:
             - StripPrefix=1
 
         - id: auth-login
-          uri: http://localhost:8081
+          uri: http://localhost:8095
           predicates:
             - Path=/auth/login
             - Method=POST
           # No StripPrefix for login endpoint to maintain correct routing
 
         - id: auth-signup
-          uri: http://localhost:8081
+          uri: http://localhost:8095
           predicates:
             - Path=/auth/signup
             - Method=POST
           # No StripPrefix for signup endpoint to maintain correct routing
 
         - id: auth-logout
-          uri: http://localhost:8081
+          uri: http://localhost:8095
           predicates:
             - Path=/auth/logout
             - Method=POST

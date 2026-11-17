@@ -1,3 +1,6 @@
+server:
+  port: 8095
+
 # Docker profile - PostgreSQL configuration
 # Activated with: -Dspring.profiles.active=docker
 
