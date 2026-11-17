@@ -1,0 +1,144 @@
+server:
+  port: 8090
+
+spring:
+  cloud:
+    gateway:
+      routes:
+        # All /auth/** routes - public (no authentication required)
+        - id: auth-otp-request
+          uri: http://localhost:8081
+          predicates:
+            - Path=/auth/otp/request
+            - Method=POST
+          # No StripPrefix for auth endpoints to maintain correct routing
+
+        - id: auth-otp-verify
+          uri: http://localhost:8081
+          predicates:
+            - Path=/auth/otp/verify
+            - Method=POST
+          # No StripPrefix - identity-service expects full /auth/otp/verify path
+
+        - id: auth-refresh
+          uri: http://localhost:8081
+          predicates:
+            - Path=/auth/refresh
+            - Method=POST
+          filters:
+            - StripPrefix=1
+
+        - id: auth-login
+          uri: http://localhost:8081
+          predicates:
+            - Path=/auth/login
+            - Method=POST
+          # No StripPrefix for login endpoint to maintain correct routing
+
+        - id: auth-signup
+          uri: http://localhost:8081
+          predicates:
+            - Path=/auth/signup
+            - Method=POST
+          # No StripPrefix for signup endpoint to maintain correct routing
+
+        - id: auth-logout
+          uri: http://localhost:8081
+          predicates:
+            - Path=/auth/logout
+            - Method=POST
+          filters:
+            - StripPrefix=1
+
+        # Fleet Service routes (port 8082)
+        - id: fleet-service-vehicles
+          uri: http://localhost:8082
+          predicates:
+            - Path=/vehicles/**
+          filters:
+            - StripPrefix=0
+
+        - id: fleet-service-drivers
+          uri: http://localhost:8082
+          predicates:
+            - Path=/drivers/**
+          filters:
+            - StripPrefix=0
+
+        - id: fleet-service-maintenance
+          uri: http://localhost:8082
+          predicates:
+            - Path=/maintenance/**
+          filters:
+            - StripPrefix=0
+
+        - id: fleet-service-work-orders
+          uri: http://localhost:8082
+          predicates:
+            - Path=/work-orders/**
+          filters:
+            - StripPrefix=0
+
+        - id: fleet-service-compliance
+          uri: http://localhost:8082
+          predicates:
+            - Path=/compliance/**
+          filters:
+            - StripPrefix=0
+
+        - id: fleet-service-summary
+          uri: http://localhost:8082
+          predicates:
+            - Path=/fleet/**
+          filters:
+            - StripPrefix=0
+
+        - id: fleet-service-vehicle-documents
+          uri: http://localhost:8082
+          predicates:
+            - Path=/vehicles/*/documents/**
+          filters:
+            - StripPrefix=0
+
+        # Trip Service routes (port 8083)
+        - id: trip-service
+          uri: http://localhost:8083
+          predicates:
+            - Path=/trips/**
+          filters:
+            - StripPrefix=0
+
+        - id: trip-service-expenses
+          uri: http://localhost:8083
+          predicates:
+            - Path=/vehicles/*/expenses
+          filters:
+            - StripPrefix=0
+
+        # Ledger Service routes (port 8084)
+        - id: ledger-service-parties
+          uri: http://localhost:8084
+          predicates:
+            - Path=/parties/**
+          filters:
+            - StripPrefix=0
+
+        - id: ledger-service-reminders
+          uri: http://localhost:8084
+          predicates:
+            - Path=/reminders/**
+          filters:
+            - StripPrefix=0
+
+        # Reporting Service routes (port 8085)
+        - id: reporting-service
+          uri: http://localhost:8085
+          predicates:
+            - Path=/reports/**
+          filters:
+            - StripPrefix=0
+
+spring.main:
+  web-application-type: reactive
+  pathmatch:
+    matching-strategy: ant_path_matcher

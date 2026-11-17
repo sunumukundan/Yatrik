@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.fleetapp</groupId>
+  <artifactId>fleet-platform</artifactId>
+  <packaging>pom</packaging>
+  <version>0.1.0-SNAPSHOT</version>
+
+  <name>fleet-platform</name>
+  <description>
+    Fleet management platform: Java 21 / Spring Boot microservices for vehicles, drivers,
+    trips, maintenance, ledger and reporting.
+  </description>
+
+  <modules>
+    <module>common-lib</module>
+    <module>gateway</module>
+    <module>identity-service</module>
+    <module>fleet-service</module>
+    <module>trip-service</module>
+    <module>ledger-service</module>
+    <module>reporting-service</module>
+  </modules>
+
+  <properties>
+    <java.version>21</java.version>
+    <maven.compiler.release>21</maven.compiler.release>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
+    <spring-boot.version>3.3.4</spring-boot.version>
+    <!--
+      The 2023.0.x train ("Leyton") is the one that supports Spring Boot 3.3.x.
+      Do not move this to a newer train (2024.0+) without also moving Spring Boot:
+      Spring Cloud refuses to start on a Boot version outside its supported range.
+    -->
+    <spring-cloud.version>2023.0.3</spring-cloud.version>
+    <jjwt.version>0.12.6</jjwt.version>
+  </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-dependencies</artifactId>
+        <version>${spring-boot.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.springframework.cloud</groupId>
+        <artifactId>spring-cloud-dependencies</artifactId>
+        <version>${spring-cloud.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+
+      <!-- Shared cross-cutting code: JWT handling, tenant context, error model, base entities. -->
+      <dependency>
+        <groupId>com.fleetapp</groupId>
+        <artifactId>common-lib</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>io.jsonwebtoken</groupId>
+        <artifactId>jjwt-api</artifactId>
+        <version>${jjwt.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.jsonwebtoken</groupId>
+        <artifactId>jjwt-impl</artifactId>
+        <version>${jjwt.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.jsonwebtoken</groupId>
+        <artifactId>jjwt-jackson</artifactId>
+        <version>${jjwt.version}</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+  <dependencies>
+    <!--
+      Common to every module: Lombok and the test stack. The service modules add their
+      own Spring Boot starters, so the starters are NOT listed here (the gateway must
+      not get the servlet stack, and common-lib is shared by both worlds).
+    -->
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.springframework.boot</groupId>
+          <artifactId>spring-boot-maven-plugin</artifactId>
+          <version>${spring-boot.version}</version>
+          <configuration>
+            <excludes>
+              <exclude>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+              </exclude>
+            </excludes>
+          </configuration>
+          <executions>
+            <execution>
+              <goals><goal>repackage</goal></goals>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>3.13.0</version>
+          <configuration>
+            <release>${java.version}</release>
+            <parameters>true</parameters>
+          </configuration>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
+</project>
